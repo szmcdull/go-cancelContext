@@ -124,6 +124,10 @@ func (me *CancelCtx) Done() <-chan struct{} {
 	return me.Context.Done()
 }
 
+func ClosedChan() chan struct{} {
+	return closedChan
+}
+
 func init() {
 	// context.WithCancel(context.Background())
 	// if err := forceexport.GetFunc(&newCancelCtx, `context.newCancelCtx`); err != nil {
