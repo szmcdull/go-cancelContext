@@ -3,6 +3,7 @@ package cancelContext
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestWithCancel(t *testing.T) {
@@ -84,5 +85,21 @@ func TestErr(t *testing.T) {
 	cancel()
 	if c2.Err() == nil {
 		t.Errorf(`err is nil`)
+	}
+}
+
+func waitDone(c *CancelCtx, result *bool) {
+	<-c.Done()
+	*result = true
+}
+
+func TestDoneAfterCancel(t *testing.T) {
+	c := NewCancelCtx(context.Background())
+	c.Cancel()
+	done := false
+	go waitDone(c, &done)
+	time.Sleep(500)
+	if !done {
+		t.Fail()
 	}
 }
