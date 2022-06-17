@@ -2,7 +2,7 @@ package cancelContext
 
 import (
 	"context"
-	"errors"
+	"sync/atomic"
 
 	"github.com/szmcdull/go-forceexport"
 )
@@ -17,20 +17,26 @@ type (
 	CancelCtx struct {
 		context.Context
 		cancelFunc context.CancelFunc
-		isDone     bool
+		isDone     int32
 	}
 )
 
 var (
-	ContextDoneError = errors.New(`Context is done`)
+	ContextDoneError = context.Canceled
 )
+
+// closedChan is a reusable closed channel.
+var closedChan = make(chan struct{})
+
+func init() {
+	close(closedChan)
+}
 
 // func NewContext() Context {
 // 	return Context{
 // 		exitEvent: NewEvent(),
 // 	}
 // }
-
 
 // 将多个Context聚合在一起，任意一个parent Done，聚合Context都会Done
 func (me *CancelCtx) NewLinkedCancelCtx(contexts ...context.Context) *CancelCtx {
@@ -89,22 +95,33 @@ var (
 // 	c.exitEvent.Set()
 // }
 
-func (me *CancelCtx) Cancel() {
-	me.cancelFunc()
-	me.isDone = true
+func (me *CancelCtx) Cancel() bool {
+	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
+		me.cancelFunc()
+		return true
+	}
+	return false
 }
 
 func (me *CancelCtx) cancel(removeFromParent bool, err error) {
-	me.cancelFunc()
-	me.isDone = true
+	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
+		me.cancelFunc()
+	}
 }
 
 func (me *CancelCtx) Err() error {
-	if me.isDone {
+	if me.isDone != 0 {
 		return ContextDoneError
 	} else {
 		return me.Context.Err()
 	}
+}
+
+func (me *CancelCtx) Done() <-chan struct{} {
+	if me.isDone != 0 {
+		return closedChan
+	}
+	return me.Context.Done()
 }
 
 func init() {
