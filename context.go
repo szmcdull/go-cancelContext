@@ -3,8 +3,6 @@ package cancelContext
 import (
 	"context"
 	"sync/atomic"
-
-	"github.com/szmcdull/go-forceexport"
 )
 
 type (
@@ -38,39 +36,6 @@ func init() {
 // 	}
 // }
 
-// 将多个Context聚合在一起，任意一个parent Done，聚合Context都会Done
-func (me *CancelCtx) NewLinkedCancelCtx(contexts ...context.Context) *CancelCtx {
-	count := len(contexts)
-	if count == 0 {
-		panic(`at least 1 ctx expected`)
-	}
-
-	withCancel := NewCancelCtx(me)
-	for i := 0; i < count; i++ {
-		propagateCancel(contexts[i], withCancel)
-	}
-
-	return withCancel
-}
-
-type (
-	_LinkedCancelCtx struct {
-		CancelCtx
-		parent *CancelCtx
-	}
-
-	cancelCtx = struct{}
-	canceler  interface {
-		cancel(removeFromParent bool, err error)
-		Done() <-chan struct{}
-	}
-)
-
-var (
-	//newCancelCtx    func(parent context.Context) cancelCtx
-	propagateCancel func(parent context.Context, child canceler)
-)
-
 // func (c Context) Deadline() (time.Time, bool) {
 // 	return time.Time{}, false
 // }
@@ -103,12 +68,6 @@ func (me *CancelCtx) Cancel() bool {
 	return false
 }
 
-func (me *CancelCtx) cancel(removeFromParent bool, err error) {
-	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
-		me.cancelFunc()
-	}
-}
-
 func (me *CancelCtx) Err() error {
 	if me.isDone != 0 {
 		return ContextDoneError
@@ -126,16 +85,6 @@ func (me *CancelCtx) Done() <-chan struct{} {
 
 func ClosedChan() chan struct{} {
 	return closedChan
-}
-
-func init() {
-	// context.WithCancel(context.Background())
-	// if err := forceexport.GetFunc(&newCancelCtx, `context.newCancelCtx`); err != nil {
-	// 	panic(err)
-	// }
-	if err := forceexport.GetFunc(&propagateCancel, `context.propagateCancel`); err != nil {
-		panic(err)
-	}
 }
 
 func NewCancelCtx(parent context.Context) *CancelCtx {

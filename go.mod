@@ -2,4 +2,4 @@ module github.com/szmcdull/go-cancelContext
 
 go 1.16
 
-require github.com/szmcdull/go-forceexport v0.0.0-20220219034051-4c613697efb7
+require github.com/szmcdull/go-forceexport v0.0.0-20230908151957-3dac42f564da

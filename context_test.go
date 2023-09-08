@@ -23,6 +23,24 @@ func TestWithCancel(t *testing.T) {
 	}
 }
 
+func TestWithCancelParent(t *testing.T) {
+	ctx := NewCancelCtx(context.Background())
+	ctx2 := NewCancelCtx(ctx)
+	ctx.Cancel()
+
+	done := false
+	select {
+	case <-ctx2.Done():
+		done = true
+	default:
+	}
+
+	if !done {
+		t.Log(`Should be done`)
+		t.Fail()
+	}
+}
+
 func TestNotCanceled(t *testing.T) {
 	ctx := NewCancelCtx(context.Background())
 
@@ -40,8 +58,8 @@ func TestNotCanceled(t *testing.T) {
 }
 
 func TestLinkedCancelCtx1(t *testing.T) {
-	ctx1 := NewCancelCtx(context.Background())
-	ctx2 := NewCancelCtx(context.Background())
+	ctx1 := NewCancelCtx(context.WithValue(context.Background(), `name`, `ctx1`))
+	ctx2 := NewCancelCtx(context.WithValue(context.Background(), `name`, `ctx2`))
 
 	ctx := ctx1.NewLinkedCancelCtx(ctx2)
 	ctx1.Cancel()
