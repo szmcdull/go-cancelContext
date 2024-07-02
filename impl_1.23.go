@@ -12,10 +12,14 @@ import (
 func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
 	result := NewCancelCtx(parent)
 
-	for _, c := range otherParents {
-		context.AfterFunc(c, result.Cancel)
+	cancel := func() {
+		result.Cancel()
 	}
-	context.AfterFunc(parent, result.Cancel)
+
+	for _, c := range otherParents {
+		context.AfterFunc(c, cancel)
+	}
+	context.AfterFunc(parent, cancel)
 
 	return result
 }
