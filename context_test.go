@@ -85,6 +85,7 @@ func TestLinkedCancelCtx2(t *testing.T) {
 	ctx2.Cancel()
 
 	done := false
+	time.Sleep(time.Millisecond) // go 1.23 will cancel linked contexts in a separate goroutine
 	select {
 	case <-ctx.Done():
 		done = true

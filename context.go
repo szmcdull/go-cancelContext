@@ -3,6 +3,7 @@ package cancelContext
 import (
 	"context"
 	"sync/atomic"
+	"time"
 )
 
 type (
@@ -89,6 +90,14 @@ func ClosedChan() chan struct{} {
 
 func NewCancelCtx(parent context.Context) *CancelCtx {
 	c, f := context.WithCancel(parent)
+	return &CancelCtx{
+		Context:    c,
+		cancelFunc: f,
+	}
+}
+
+func NewTimeoutCtx(parent context.Context, timeout time.Duration) *CancelCtx {
+	c, f := context.WithTimeout(parent, timeout)
 	return &CancelCtx{
 		Context:    c,
 		cancelFunc: f,
