@@ -11,7 +11,8 @@ type (
 	// 	exitEvent *Event
 	// }
 
-	// 封装标准库context.WithCancel
+	// Wrapping context.WithCancel
+	// An empty CancelCtx behaves as it is already canceled
 	CancelCtx struct {
 		context.Context
 		cancelFunc context.CancelFunc
@@ -23,7 +24,7 @@ type (
 
 var (
 	ContextDoneError = context.Canceled
-	CanceledCtx      = canceledCtx{}
+	CanceledCtx      = CancelCtx{}
 )
 
 // closedChan is a reusable closed channel.
@@ -122,6 +123,34 @@ func NewTimeoutCtx(parent context.Context, timeout time.Duration) CancelCtx {
 		Context:    c,
 		cancelFunc: f,
 	}
+}
+
+func (me CancelCtx) Deadline() (deadline time.Time, ok bool) {
+	if me.Context == nil {
+		return
+	}
+	return me.Context.Deadline()
+}
+
+func (me CancelCtx) Done() <-chan struct{} {
+	if me.Context == nil {
+		return closedChan
+	}
+	return me.Context.Done()
+}
+
+func (me CancelCtx) Err() error {
+	if me.Context == nil {
+		return ContextDoneError
+	}
+	return me.Context.Err()
+}
+
+func (me CancelCtx) Value(key interface{}) interface{} {
+	if me.Context == nil {
+		return nil
+	}
+	return me.Context.Value(key)
 }
 
 func (me canceledCtx) Deadline() (deadline time.Time, ok bool) {
