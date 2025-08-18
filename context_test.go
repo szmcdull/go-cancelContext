@@ -148,6 +148,19 @@ func TestPassOn(t *testing.T) {
 	}
 }
 
+func TestCanceledCtx(t *testing.T) {
+	c := NewCancelCtx(CanceledCtx)
+	if c.Err() != context.Canceled {
+		t.Errorf(`expected ContextDoneError, got %v`, c.Err())
+	}
+	c = NewCancelCtx(context.Background())
+	c2 := c.NewLinkedCancelCtx(CanceledCtx)
+	time.Sleep(time.Millisecond)
+	if c2.Err() != context.Canceled {
+		t.Errorf(`expected ContextDoneError, got %v`, c.Err())
+	}
+}
+
 func TestStdWithCancel(t *testing.T) {
 	c, cancel := context.WithCancel(context.Background())
 	if c.Err() != nil {

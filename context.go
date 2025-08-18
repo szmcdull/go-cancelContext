@@ -17,10 +17,13 @@ type (
 		cancelFunc context.CancelFunc
 		//isDone     int32
 	}
+
+	canceledCtx struct{}
 )
 
 var (
 	ContextDoneError = context.Canceled
+	CanceledCtx      = canceledCtx{}
 )
 
 // closedChan is a reusable closed channel.
@@ -97,4 +100,20 @@ func NewTimeoutCtx(parent context.Context, timeout time.Duration) CancelCtx {
 		Context:    c,
 		cancelFunc: f,
 	}
+}
+
+func (me canceledCtx) Deadline() (deadline time.Time, ok bool) {
+	return
+}
+
+func (me canceledCtx) Done() <-chan struct{} {
+	return closedChan
+}
+
+func (me canceledCtx) Err() error {
+	return ContextDoneError
+}
+
+func (me canceledCtx) Value(key interface{}) interface{} {
+	return nil
 }

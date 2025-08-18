@@ -49,7 +49,7 @@ func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) Can
 	for _, c := range otherParents {
 		context.AfterFunc(c, cancel)
 	}
-	context.AfterFunc(parent, cancel)
+	//context.AfterFunc(parent, cancel)
 
 	return result
 }
