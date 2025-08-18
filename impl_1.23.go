@@ -42,12 +42,12 @@ var (
 func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
 	result := NewCancelCtx(parent)
 
-	cancel := func() {
-		result.Cancel()
-	}
+	// cancel := func() {
+	// 	result.Cancel()
+	// }
 
 	for _, c := range otherParents {
-		context.AfterFunc(c, cancel)
+		context.AfterFunc(c, result.Cancel)
 	}
 	//context.AfterFunc(parent, cancel)
 

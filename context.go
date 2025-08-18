@@ -27,10 +27,12 @@ var (
 )
 
 // closedChan is a reusable closed channel.
-var closedChan = make(chan struct{})
+var closedChan <-chan struct{}
 
 func init() {
-	close(closedChan)
+	c, cancel := context.WithCancel(context.Background())
+	cancel()
+	closedChan = c.Done()
 }
 
 // func NewContext() Context {
@@ -63,12 +65,31 @@ func init() {
 // 	c.exitEvent.Set()
 // }
 
-func (me *CancelCtx) Cancel() bool {
-	if me.Context.Err() != nil {
+func (me *CancelCtx) Cancel() {
+	// if me.Context.Err() != nil {
+	// 	return false
+	// }
+	me.cancelFunc()
+	// return true
+}
+
+// Canceled provides another way to check if the context is canceled.
+//   - no lock if canceled before first wait/check
+//   - 1 lock if canceled afterwards
+//   - 2 locks if not canceled
+//
+// While Err() always requires 1 lock
+func (me *CancelCtx) Canceled() bool {
+	ch := me.Done()
+	if ch == closedChan {
+		return true
+	}
+	select {
+	case <-ch:
+		return true
+	default:
 		return false
 	}
-	me.cancelFunc()
-	return true
 }
 
 // func (me *CancelCtx) Err() error {
@@ -82,7 +103,8 @@ func (me *CancelCtx) Cancel() bool {
 // 	return me.Context.Done()
 // }
 
-func ClosedChan() chan struct{} {
+// returns context.closedchan
+func ClosedChan() <-chan struct{} {
 	return closedChan
 }
 

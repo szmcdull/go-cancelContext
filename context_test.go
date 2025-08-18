@@ -161,6 +161,14 @@ func TestCanceledCtx(t *testing.T) {
 	}
 }
 
+func TestCloseChan(t *testing.T) {
+	c := NewCancelCtx(context.Background())
+	c.Cancel()
+	if c.Done() != ClosedChan() {
+		t.Fail()
+	}
+}
+
 func TestStdWithCancel(t *testing.T) {
 	c, cancel := context.WithCancel(context.Background())
 	if c.Err() != nil {
