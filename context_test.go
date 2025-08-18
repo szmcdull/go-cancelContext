@@ -2,6 +2,7 @@ package cancelContext
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 )
@@ -107,7 +108,7 @@ func TestErr(t *testing.T) {
 	}
 }
 
-func waitDone(c *CancelCtx, result *bool) {
+func waitDone(c CancelCtx, result *bool) {
 	<-c.Done()
 	*result = true
 }
@@ -120,5 +121,66 @@ func TestDoneAfterCancel(t *testing.T) {
 	time.Sleep(500)
 	if !done {
 		t.Fail()
+	}
+}
+
+func TestPassOn(t *testing.T) {
+	c := NewCancelCtx(context.Background())
+
+	cancel := func(ctx CancelCtx) {
+		ctx.Cancel()
+	}
+
+	cancel(c)
+	if c.Err() == nil {
+		t.Log(`Should be canceled`)
+		t.Fail()
+	}
+
+	c = NewCancelCtx(context.Background())
+	c2 := NewCancelCtx(context.Background())
+	c3 := c.NewLinkedCancelCtx(c2)
+	cancel(c2)
+	time.Sleep(time.Millisecond) // seems the child context is canceled in a goroutine (see context.afterFuncCtx.cancel()), so wait a second for it
+	if c3.Err() == nil {
+		t.Log(`Should be canceled`)
+		t.Fail()
+	}
+}
+
+func TestStdWithCancel(t *testing.T) {
+	c, cancel := context.WithCancel(context.Background())
+	if c.Err() != nil {
+		t.Fatal(`initial Err() should be nil`)
+	}
+	cancel()
+	err := c.Err()
+	if err != context.Canceled {
+		t.Errorf(`expected context.Canceled, got %v`, err)
+	}
+	cancel()
+	err = c.Err()
+	if err != context.Canceled {
+		t.Errorf(`expected context.Canceled, got %v`, err)
+	}
+}
+
+func TestStdWithCancelCause(t *testing.T) {
+	c, cancel := context.WithCancelCause(context.Background())
+	if c.Err() != nil {
+		t.Fatal(`initial Err() should be nil`)
+	}
+	aaa := errors.New(`aaa`)
+	cancel(aaa)
+	err := c.Err()
+	if err != context.Canceled {
+		t.Errorf(`expected context.Canceled, got %v`, err)
+	}
+	if context.Cause(c) != aaa {
+		t.Errorf(`expected cause %v, got %v`, aaa, err)
+	}
+	cancel(errors.New(`bbb`))
+	if context.Cause(c) != aaa {
+		t.Errorf(`cause should not changed after set`)
 	}
 }

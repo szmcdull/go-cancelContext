@@ -7,7 +7,6 @@ import (
 	"context"
 	"reflect"
 	"runtime"
-	"sync/atomic"
 
 	"github.com/szmcdull/go-forceexport"
 )
@@ -33,14 +32,12 @@ func init() {
 }
 
 func (me *CancelCtx) cancel(removeFromParent bool, err, cause error) {
-	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
-		me.cancelFunc()
-	}
+	me.cancelFunc()
 }
 
 // NewLinkedCancelCtx creates a new context that links with all parents.
 // When any parent is done, the new context is canceled automatically.
-func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
+func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
 	withCancel := NewCancelCtx(parent)
 	p := reflect.ValueOf(withCancel.Context).Pointer()
 	for _, c := range otherParents {

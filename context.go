@@ -2,7 +2,6 @@ package cancelContext
 
 import (
 	"context"
-	"sync/atomic"
 	"time"
 )
 
@@ -16,7 +15,7 @@ type (
 	CancelCtx struct {
 		context.Context
 		cancelFunc context.CancelFunc
-		isDone     int32
+		//isDone     int32
 	}
 )
 
@@ -62,43 +61,39 @@ func init() {
 // }
 
 func (me *CancelCtx) Cancel() bool {
-	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
-		me.cancelFunc()
-		return true
+	if me.Context.Err() != nil {
+		return false
 	}
-	return false
+	me.cancelFunc()
+	return true
 }
 
-func (me *CancelCtx) Err() error {
-	if me.isDone != 0 {
-		return ContextDoneError
-	} else {
-		return me.Context.Err()
-	}
-}
+// func (me *CancelCtx) Err() error {
+// 	return me.Context.Err()
+// }
 
-func (me *CancelCtx) Done() <-chan struct{} {
-	if me.isDone != 0 {
-		return closedChan
-	}
-	return me.Context.Done()
-}
+// func (me *CancelCtx) Done() <-chan struct{} {
+// 	if me.isDone != 0 {
+// 		return closedChan
+// 	}
+// 	return me.Context.Done()
+// }
 
 func ClosedChan() chan struct{} {
 	return closedChan
 }
 
-func NewCancelCtx(parent context.Context) *CancelCtx {
+func NewCancelCtx(parent context.Context) CancelCtx {
 	c, f := context.WithCancel(parent)
-	return &CancelCtx{
+	return CancelCtx{
 		Context:    c,
 		cancelFunc: f,
 	}
 }
 
-func NewTimeoutCtx(parent context.Context, timeout time.Duration) *CancelCtx {
+func NewTimeoutCtx(parent context.Context, timeout time.Duration) CancelCtx {
 	c, f := context.WithTimeout(parent, timeout)
-	return &CancelCtx{
+	return CancelCtx{
 		Context:    c,
 		cancelFunc: f,
 	}

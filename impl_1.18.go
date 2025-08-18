@@ -6,7 +6,6 @@ package cancelContext
 import (
 	"context"
 	"runtime"
-	"sync/atomic"
 
 	"github.com/szmcdull/go-forceexport"
 )
@@ -37,13 +36,11 @@ func init() {
 }
 
 func (me *CancelCtx) cancel(removeFromParent bool, err error) {
-	if atomic.CompareAndSwapInt32(&me.isDone, 0, 1) {
-		me.cancelFunc()
-	}
+	me.cancelFunc()
 }
 
 // 将多个Context聚合在一起，任意一个parent Done，聚合Context都会Done
-func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
+func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
 	count := len(otherParents)
 	// if count == 0 {
 	// 	panic(`at least 1 ctx expected`)
