@@ -18,8 +18,6 @@ type (
 		cancelFunc context.CancelFunc
 		//isDone     int32
 	}
-
-	canceledCtx struct{}
 )
 
 var (
@@ -65,33 +63,6 @@ func init() {
 // func (c Context) Close() {
 // 	c.exitEvent.Set()
 // }
-
-func (me *CancelCtx) Cancel() {
-	// if me.Context.Err() != nil {
-	// 	return false
-	// }
-	me.cancelFunc()
-	// return true
-}
-
-// Canceled provides another way to check if the context is canceled.
-//   - no lock if canceled before first wait/check
-//   - 1 lock if canceled afterwards
-//   - 2 locks if not canceled
-//
-// While Err() always requires 1 lock
-func (me *CancelCtx) Canceled() bool {
-	ch := me.Done()
-	if ch == closedChan {
-		return true
-	}
-	select {
-	case <-ch:
-		return true
-	default:
-		return false
-	}
-}
 
 // func (me *CancelCtx) Err() error {
 // 	return me.Context.Err()
@@ -153,18 +124,33 @@ func (me CancelCtx) Value(key interface{}) interface{} {
 	return me.Context.Value(key)
 }
 
-func (me canceledCtx) Deadline() (deadline time.Time, ok bool) {
-	return
+func (me CancelCtx) Cancel() {
+	// if me.Context.Err() != nil {
+	// 	return false
+	// }
+	me.cancelFunc()
+	// return true
 }
 
-func (me canceledCtx) Done() <-chan struct{} {
-	return closedChan
+// Canceled provides another way to check if the context is canceled.
+//   - no lock if canceled before first wait/check
+//   - 1 lock if canceled afterwards
+//   - 2 locks if not canceled
+//
+// While Err() always requires 1 lock
+func (me CancelCtx) Canceled() bool {
+	ch := me.Done()
+	if ch == closedChan {
+		return true
+	}
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
 }
 
-func (me canceledCtx) Err() error {
-	return ContextDoneError
-}
-
-func (me canceledCtx) Value(key interface{}) interface{} {
-	return nil
+func (me CancelCtx) IsEmpty() bool {
+	return me.Context == nil
 }

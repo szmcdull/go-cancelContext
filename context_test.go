@@ -159,6 +159,9 @@ func TestCanceledCtx(t *testing.T) {
 	if c2.Err() != context.Canceled {
 		t.Errorf(`expected ContextDoneError, got %v`, c.Err())
 	}
+	if !CanceledCtx.IsEmpty() {
+		t.Errorf(`expected CancelCtx to be empty`)
+	}
 }
 
 func TestCloseChan(t *testing.T) {
