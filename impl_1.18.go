@@ -39,8 +39,9 @@ func (me *CancelCtx) cancel(removeFromParent bool, err error) {
 	me.cancelFunc()
 }
 
-// 将多个Context聚合在一起，任意一个parent Done，聚合Context都会Done
-func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
+// NewLinkedCancelCtx links multiple parents; when any parent is done, the result is canceled.
+// Only the cancel signal is propagated; linked.Err() is always context.Canceled.
+func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
 	count := len(otherParents)
 	// if count == 0 {
 	// 	panic(`at least 1 ctx expected`)

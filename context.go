@@ -80,7 +80,15 @@ func ClosedChan() <-chan struct{} {
 	return closedChan
 }
 
-func NewCancelCtx(parent context.Context) CancelCtx {
+func NewCancelCtx(parent context.Context) *CancelCtx {
+	c, f := context.WithCancel(parent)
+	return &CancelCtx{
+		Context:    c,
+		cancelFunc: f,
+	}
+}
+
+func NewCancelCtx2(parent context.Context) CancelCtx {
 	c, f := context.WithCancel(parent)
 	return CancelCtx{
 		Context:    c,
@@ -88,7 +96,15 @@ func NewCancelCtx(parent context.Context) CancelCtx {
 	}
 }
 
-func NewTimeoutCtx(parent context.Context, timeout time.Duration) CancelCtx {
+func NewTimeoutCtx(parent context.Context, timeout time.Duration) *CancelCtx {
+	c, f := context.WithTimeout(parent, timeout)
+	return &CancelCtx{
+		Context:    c,
+		cancelFunc: f,
+	}
+}
+
+func NewTimeoutCtx2(parent context.Context, timeout time.Duration) CancelCtx {
 	c, f := context.WithTimeout(parent, timeout)
 	return CancelCtx{
 		Context:    c,

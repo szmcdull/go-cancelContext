@@ -32,12 +32,14 @@ func init() {
 }
 
 func (me *CancelCtx) cancel(removeFromParent bool, err, cause error) {
-	me.cancelFunc()
+	go me.cancelFunc()
 }
 
 // NewLinkedCancelCtx creates a new context that links with all parents.
 // When any parent is done, the new context is canceled automatically.
-func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
+// Only the cancel signal is propagated; linked.Err() is always context.Canceled.
+// To inspect why a linked parent canceled, check the original parent contexts directly.
+func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
 	withCancel := NewCancelCtx(parent)
 	p := reflect.ValueOf(withCancel.Context).Pointer()
 	for _, c := range otherParents {

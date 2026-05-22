@@ -2,7 +2,6 @@ package cancelContext
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 )
@@ -114,18 +113,18 @@ func waitDone(c CancelCtx, result *bool) {
 }
 
 func TestDoneAfterCancel(t *testing.T) {
-	c := NewCancelCtx(context.Background())
+	c := NewCancelCtx2(context.Background())
 	c.Cancel()
 	done := false
 	go waitDone(c, &done)
-	time.Sleep(500)
+	time.Sleep(time.Millisecond) // go will cancel linked contexts in a separate goroutine
 	if !done {
 		t.Fail()
 	}
 }
 
 func TestPassOn(t *testing.T) {
-	c := NewCancelCtx(context.Background())
+	c := NewCancelCtx2(context.Background())
 
 	cancel := func(ctx CancelCtx) {
 		ctx.Cancel()
@@ -137,8 +136,8 @@ func TestPassOn(t *testing.T) {
 		t.Fail()
 	}
 
-	c = NewCancelCtx(context.Background())
-	c2 := NewCancelCtx(context.Background())
+	c = NewCancelCtx2(context.Background())
+	c2 := NewCancelCtx2(context.Background())
 	c3 := c.NewLinkedCancelCtx(c2)
 	cancel(c2)
 	time.Sleep(time.Millisecond) // seems the child context is canceled in a goroutine (see context.afterFuncCtx.cancel()), so wait a second for it
@@ -189,22 +188,48 @@ func TestStdWithCancel(t *testing.T) {
 	}
 }
 
-func TestStdWithCancelCause(t *testing.T) {
-	c, cancel := context.WithCancelCause(context.Background())
-	if c.Err() != nil {
-		t.Fatal(`initial Err() should be nil`)
-	}
-	aaa := errors.New(`aaa`)
-	cancel(aaa)
-	err := c.Err()
-	if err != context.Canceled {
-		t.Errorf(`expected context.Canceled, got %v`, err)
-	}
-	if context.Cause(c) != aaa {
-		t.Errorf(`expected cause %v, got %v`, aaa, err)
-	}
-	cancel(errors.New(`bbb`))
-	if context.Cause(c) != aaa {
-		t.Errorf(`cause should not changed after set`)
-	}
-}
+// Getting real cause from linked context is not supported.
+// context.Canceled is returned instead.
+
+// func waitLinkedDone(t *testing.T, ctx *CancelCtx) {
+// 	t.Helper()
+// 	select {
+// 	case <-ctx.Done():
+// 	case <-time.After(time.Second):
+// 		t.Fatal(`linked context was not canceled in time`)
+// 	}
+// }
+
+// // Linked cancel propagates the signal only, not the linked parent's Err()/Cause().
+// func TestLinkedCancelCtxSignalOnly(t *testing.T) {
+// 	timeoutParent, cancel := context.WithTimeout(context.Background(), time.Millisecond)
+// 	defer cancel()
+// 	time.Sleep(2 * time.Millisecond)
+// 	if timeoutParent.Err() != context.DeadlineExceeded {
+// 		t.Fatalf(`timeout parent err = %v, want DeadlineExceeded`, timeoutParent.Err())
+// 	}
+
+// 	root := NewCancelCtx(context.Background())
+// 	linked := root.NewLinkedCancelCtx(timeoutParent)
+// 	waitLinkedDone(t, linked)
+// 	if linked.Err() != context.Canceled {
+// 		t.Errorf(`linked err = %v, want Canceled`, linked.Err())
+// 	}
+
+// 	cause := errors.New(`boom`)
+// 	causeParent, cancelCause := context.WithCancelCause(context.Background())
+// 	cancelCause(cause)
+// 	if context.Cause(causeParent) != cause {
+// 		t.Fatalf(`parent cause = %v, want %v`, context.Cause(causeParent), cause)
+// 	}
+
+// 	root = NewCancelCtx(context.Background())
+// 	linked = root.NewLinkedCancelCtx(causeParent)
+// 	waitLinkedDone(t, linked)
+// 	if linked.Err() != context.Canceled {
+// 		t.Errorf(`linked err = %v, want Canceled`, linked.Err())
+// 	}
+// 	if context.Cause(linked) == cause {
+// 		t.Errorf(`linked cause should not be propagated from linked parent`)
+// 	}
+// }

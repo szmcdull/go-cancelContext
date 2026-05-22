@@ -29,6 +29,8 @@ var (
 
 // NewLinkedCancelCtx creates a new context that links with all parents.
 // When any parent is done, the new context is canceled automatically (in a separate goroutine).
+// Only the cancel signal is propagated; linked.Err() is always context.Canceled.
+// To inspect why a linked parent canceled, check the original parent contexts directly.
 //
 //   - Performance WARNING 1: each parent context that is not a CancelCtx or created with WithCancel without
 //     being wrapped in a custom implementation providing a different done channel, will be monitored in a new goroutine.
@@ -39,8 +41,23 @@ var (
 //
 // A new version of go-forceexport supports go 1.23+ but requires setting additional build flags, or spending
 // additional 3-4 second boot time searching for FirstModuleData, both are not acceptable in some situations.
-func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) CancelCtx {
+func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
 	result := NewCancelCtx(parent)
+
+	// cancel := func() {
+	// 	result.Cancel()
+	// }
+
+	for _, c := range otherParents {
+		context.AfterFunc(c, result.Cancel)
+	}
+	//context.AfterFunc(parent, cancel)
+
+	return result
+}
+
+func (parent CancelCtx) NewLinkedCancelCtx2(otherParents ...context.Context) CancelCtx {
+	result := NewCancelCtx2(parent)
 
 	// cancel := func() {
 	// 	result.Cancel()
