@@ -21,6 +21,4 @@ If you need to know **why** or **which parent** triggered the cancel, keep refer
 
 ## Implementation notes
 
-Go 1.18–1.22 use internal `context` APIs via [go-forceexport](https://github.com/szmcdull/go-forceexport) for efficient propagation.
-
-Go 1.23+ uses `context.AfterFunc` as a workaround ([golang/go#67401](https://github.com/golang/go/issues/67401)); see `impl_1.23.go` for performance caveats.
+Uses internal `context` APIs via [go-forceexport](https://github.com/szmcdull/go-forceexport) for efficient linked propagation. On Go 1.23+, `go:linkname` is restricted ([golang/go#67401](https://github.com/golang/go/issues/67401)); go-forceexport resolves symbols at runtime without extra build flags (first use may scan module data once at init).

@@ -2,6 +2,7 @@ package cancelContext
 
 import (
 	"context"
+	"reflect"
 	"time"
 )
 
@@ -96,6 +97,14 @@ func NewCancelCtx2(parent context.Context) CancelCtx {
 	}
 }
 
+func NewCancelCtx2V(parent CancelCtx) CancelCtx {
+	c, f := context.WithCancel(parent)
+	return CancelCtx{
+		Context:    c,
+		cancelFunc: f,
+	}
+}
+
 func NewTimeoutCtx(parent context.Context, timeout time.Duration) *CancelCtx {
 	c, f := context.WithTimeout(parent, timeout)
 	return &CancelCtx{
@@ -169,4 +178,12 @@ func (me CancelCtx) Canceled() bool {
 
 func (me CancelCtx) IsEmpty() bool {
 	return me.Context == nil
+}
+
+// innerCancelCtx returns the heap *cancelCtx address embedded in c.
+func innerCancelCtx(c CancelCtx) uintptr {
+	if c.Context == nil {
+		panic("cancelContext: internal context is not cancelable")
+	}
+	return reflect.ValueOf(c.Context).Pointer()
 }
