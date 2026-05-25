@@ -22,3 +22,12 @@ If you need to know **why** or **which parent** triggered the cancel, keep refer
 ## Implementation notes
 
 Uses internal `context` APIs via [go-forceexport](https://github.com/szmcdull/go-forceexport) for efficient linked propagation. On Go 1.23+, `go:linkname` is restricted ([golang/go#67401](https://github.com/golang/go/issues/67401)); go-forceexport resolves symbols at runtime without extra build flags (first use may scan module data once at init).
+
+Implementation is split by Go version:
+
+- **Go 1.18 – 1.19** — package-level `context.propagateCancel`, two-argument `canceler.cancel`
+- **1.20 Not supported** — stdlib `canceler` gained a `cause` parameter; the Go 1.21 linked implementation relies on APIs that do not exist until Go 1.21. Use 1.19 or upgrade to 1.21+.
+- **Go 1.21+** — `context.(*cancelCtx).propagateCancel`, three-argument `canceler.cancel` (includes `cause`)
+
+`NewCancelCtx` / `NewTimeoutCtx` compile on older toolchains, but **`NewLinkedCancelCtx` requires Go 1.18+** and a supported version as above.
+

@@ -1,2 +1,4 @@
-github.com/szmcdull/go-forceexport v0.0.0-20230908151957-3dac42f564da h1:ig15vGsDzWhRpmImd9wTTmgjI5y3NKtnsT7rCDfzuKg=
-github.com/szmcdull/go-forceexport v0.0.0-20230908151957-3dac42f564da/go.mod h1:V1HD44dVgdGrpKy9EstaijD/RmdETrxOsyc4H4rQXO8=
+github.com/szmcdull/go-forceexport v0.0.0-20260521221256-f40a3391603d h1:Gg6256YrqucIx/71Zmll2V00qioPVjVUgzgk7FMNHMI=
+github.com/szmcdull/go-forceexport v0.0.0-20260521221256-f40a3391603d/go.mod h1:V1HD44dVgdGrpKy9EstaijD/RmdETrxOsyc4H4rQXO8=
+github.com/szmcdull/go-forceexport v0.0.0-20260525225150-489b66b0404a h1:vBoyA4yK8MxPQjd5oUfStrJlXs/+3NBe4wAiV+Rr4ac=
+github.com/szmcdull/go-forceexport v0.0.0-20260525225150-489b66b0404a/go.mod h1:V1HD44dVgdGrpKy9EstaijD/RmdETrxOsyc4H4rQXO8=

@@ -51,8 +51,8 @@ func (p innerCanceler) Done() <-chan struct{} {
 	return doneInner(uintptr(p))
 }
 
-func (me CancelCtx) cancel(removeFromParent bool, err, cause error) {
-	go me.cancelFunc()
+func (me *CancelCtx) cancel(removeFromParent bool, err, cause error) {
+	me.Cancel()
 }
 
 // NewLinkedCancelCtx creates a new context that links with all parents.
@@ -61,27 +61,10 @@ func (me CancelCtx) cancel(removeFromParent bool, err, cause error) {
 // To inspect why a linked parent canceled, check the original parent contexts directly.
 func (parent *CancelCtx) NewLinkedCancelCtx(otherParents ...context.Context) *CancelCtx {
 	withCancel := NewCancelCtx(parent)
-	p := innerCancelCtx(*withCancel)
+	p := innerCancelCtx(withCancel)
 	for _, c := range otherParents {
 		propagateCancel(p, c, withCancel)
 	}
 
 	return withCancel
 }
-
-// func (parent CancelCtx) NewLinkedCancelCtx2(otherParents ...context.Context) CancelCtx {
-// 	n, f := context.WithCancel(parent)
-// 	w := CancelCtx{
-// 		Context:    n,
-// 		cancelFunc: f,
-// 	}
-
-// 	//w := NewCancelCtx2(bg)
-// 	p := innerCancelCtx(w)
-// 	child := innerCanceler(p)
-// 	for _, c := range otherParents {
-// 		propagateCancel(p, c, child)
-// 	}
-
-// 	return w
-// }

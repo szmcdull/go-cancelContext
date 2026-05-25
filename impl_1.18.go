@@ -1,5 +1,5 @@
-//go:build go1.18 && !go1.21
-// +build go1.18,!go1.21
+//go:build go1.18 && !go1.20
+// +build go1.18,!go1.20
 
 package cancelContext
 
@@ -36,7 +36,7 @@ func init() {
 }
 
 func (me *CancelCtx) cancel(removeFromParent bool, err error) {
-	me.cancelFunc()
+	me.Cancel()
 }
 
 // NewLinkedCancelCtx links multiple parents; when any parent is done, the result is canceled.
